@@ -4,12 +4,12 @@ from solc import compile_source
 
 # Code
 contract_source_code = '''
-contract Web3test1 {
+contract RockScissorPaper {
     uint public amountRaised;
     address[] public MemberAddresses;
     uint32[] public MemberData;
 
-    function Web3test1() public {
+    function RockScissorPaper() public {
         amountRaised = 0;
     }
 
@@ -95,15 +95,11 @@ contract Web3test1 {
 # Web3 setting
 rpc_url = "http://localhost:8123"
 w3 = Web3(HTTPProvider(rpc_url))
-# w3 = Web3(IPCProvider("./chain-data/geth.ipc"))
 w3.personal.unlockAccount(w3.eth.accounts[0], "heiler", 0)	# address, password, ?
-
 
 # Compile
 compiled_sol = compile_source(contract_source_code)
-contract_interface = compiled_sol['<stdin>:Web3test1']
-with open('contract interface.txt', 'w') as f:
-    print(contract_interface, file=f)
+contract_interface = compiled_sol['<stdin>:RockScissorPaper']
 
 contract = w3.eth.contract(abi=contract_interface['abi'],
                            bytecode=contract_interface['bin'],
@@ -113,34 +109,9 @@ contract = w3.eth.contract(abi=contract_interface['abi'],
 tx_hash = contract.deploy(transaction={'from': w3.eth.accounts[0]})
 
 print("tx_hash: {}".format(tx_hash))
-print('- Little Endian:', int.from_bytes(tx_hash, 'little'))
-print('- Big Endian:', int.from_bytes(tx_hash, 'big'))
-
 print("Finish deploying")
 
-# Mining
+# Mining to write smart contract code to the block
 w3.miner.start(1)
-time.sleep(5)
+time.sleep(8)
 w3.miner.stop()
-
-# Contract address
-# tx_receipt = w3.eth.getTransactionReceipt(tx_hash)
-# print(tx_receipt)
-# contract_address = tx_receipt['contractAddress']
-
-# # Use contract
-# contract_instance = w3.eth.contract(contract_address, abi=contract_interface['abi'])
-# print('contract_address\n')
-# print(contract_instance.__dict__)
-# # Get
-# # print('Contract value: {}'.format(contract_instance.call().participatingInGame()))
-# # Set
-# contract_instance.functions.participatingInGame(1).call({'from': w3.eth.accounts[0], 'value': w3.toWei(10, 'ether')})
-# print('Setting value to data from server')
-
-# Mining
-w3.miner.start(1)
-time.sleep(5)
-w3.miner.stop()
-
-
