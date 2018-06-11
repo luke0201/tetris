@@ -11,8 +11,10 @@ from coapthon.client.helperclient import HelperClient
 
 
 def req_coap(host, op, payload):
+    PORT = 5682
+
     port = PORT
-    path = 'red'
+    path = 'game'
 
     client = HelperClient(server=(host, port))
 

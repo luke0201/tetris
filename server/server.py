@@ -27,12 +27,20 @@ class MoteServer:
         with open(motelist_path, 'r') as f:
             self.motelist = [s.strip() for s in f.readlines()]
 
+        # check if the listed motes are alive
         for ipaddr in self.motelist:
             self._hello_mote(ipaddr)
         print()
 
     def _hello_mote(self, ipaddr):
-        ret = coap.req_coap(ipaddr, 'GET', 'hello').payload
+        """
+        Check if the mote is reachable
+
+        :param ipaddr: IPv6 address of the mote
+        :return: None
+        """
+
+        ret = coap.req_coap(ipaddr, 'PUT', 'hello').payload
         print('{}: {}'.format(
                 ipaddr, ret if ret is not None else 'Failed'))
 
@@ -45,19 +53,19 @@ class MoteServer:
 
         # start the game
         for ipaddr in self.motelist:
-            ret = coap.req_coap(ipaddr, 'GET', 'start').payload
+            ret = coap.req_coap(ipaddr, 'PUT', 'start').payload
 
         time.sleep(10)
 
         # finish the game
         for ipaddr in self.motelist:
-            ret = coap.req_coap(ipaddr, 'GET', 'end').payload
+            ret = coap.req_coap(ipaddr, 'PUT', 'end').payload
 
         # return the results
         result = dict()
         for ipaddr in self.motelist:
             result[ipaddr] = '1'
-            ret = coap.req_coap(ipaddr, 'GET', 'result {}'.format(result[ipaddr])).payload
+            ret = coap.req_coap(ipaddr, 'PUT', 'result {}'.format(result[ipaddr])).payload
 
 
 def main(argv):
