@@ -1,5 +1,6 @@
 import time
 import argparse
+import json
 
 import web3
 import solc
@@ -43,6 +44,9 @@ class ContractManager:
             print('Compiled the contract source code')
 
         return compiled_sol['<stdin>:RockScissorPaper']
+
+    def get_abi(self):
+        return self.contract_interface['abi']
 
     def deploy_contract(self):
         """
@@ -137,6 +141,9 @@ def parse_args():
             '--load', default=None,
             help='Load an existing contract from given block')
     parser.add_argument(
+            '--print_abi', default=None,
+            help='Print ABI to output file')
+    parser.add_argument(
             '--execute', action='store_true',
             help='Execute the function participaingInGame from the contract')
     parser.add_argument(
@@ -163,6 +170,9 @@ def main(args):
         print('<Load an existing contract>')
         contract_manager.load_contract(args.load)
         print()
+    if args.print_abi:
+        with open(args.print_abi, 'w') as f:
+            json.dump(contract_manager.get_abi(), f, indent=2)
     if args.execute:
         print('<Execute a function from the contract>')
         contract_manager.exec_participatingInGame(10)  # bet 10 ether
