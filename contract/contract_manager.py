@@ -1,4 +1,3 @@
-import sys
 import time
 import argparse
 
@@ -54,20 +53,19 @@ class ContractManager:
         """
 
         contract = self.w3.eth.contract(
-                abi=contract_interface['abi'],
-                bytecode=contract_interface['bin'],
-                bytecode_runtime=contract_interface['bin-runtime'])
+                abi=self.contract_interface['abi'],
+                bytecode=self.contract_interface['bin'],
+                bytecode_runtime=self.contract_interface['bin-runtime'])
 
         trans_hash = contract.deploy(
                 transaction={'from': self.w3.eth.accounts[0]})
 
         self._mine_block()  # an Ethereum block needs to be mined to deploy
-        if self.debug:
-            print('Deployed the contract to the chain')
-            print('  hash:', trans_hash)
-
         trans_receipt = self.w3.eth.getTransactionReceipt(trans_hash)
         self.contract_addr = trans_receipt['contractAddress']
+        if self.debug:
+            print('Deployed the contract to the chain')
+            print('  Address:', self.contract_addr)
 
     def load_contract(self, contract_addr):
         """
@@ -99,13 +97,13 @@ class ContractManager:
         # execute participatingInGame
         contract.functions.participatingInGame(1).transact({
             'from': self.w3.eth.accounts[0],
-            'to': self.contract_address,
+            'to': self.contract_addr,
             'value': self.w3.toWei(betting_ether, 'ether')})
         if self.debug:
             print('Executed participaingInGame with {} ether'.format(
                     betting_ether))
 
-    def _mine_block(self, sec, n_threads=1):
+    def _mine_block(self, sec=8, n_threads=1):
         """
         Mine an Ethereum block.
 
@@ -123,11 +121,10 @@ class ContractManager:
             print('Done')
 
 
-def parse_args(args):
+def parse_args():
     """
     Argument parser for this program.
 
-    :param args: raw input arguments
     :return: parsed arguments
     """
 
@@ -149,21 +146,18 @@ def parse_args(args):
             '--rpc_pw', default='heiler',
             help='Passphrase for the zeroth account')
     parser.add_argument(
-            '--contract_code', default='game_contract.sol'
+            '--contract_code', default='game_contract.sol',
             help='Path in which the contract source code resides')
 
-    return parser.parse_args(args)
+    return parser.parse_args()
 
 
 def main(args):
-    args = parse_args(args)
-
     contract_manager = ContractManager(
-            args.rpc_url, args.rpc_account_passwd, debug=True)
+            args.rpc_url, args.rpc_pw, args.contract_code, debug=True)
     if args.deploy:
         print('<Deploy a contract>')
-        contract_manager.deploy_contract(args.contract_code)
-        print('Transaction hash:', contract_manager.trans_hash)
+        contract_manager.deploy_contract()
         print()
     elif args.load:
         print('<Load an existing contract>')
@@ -171,10 +165,11 @@ def main(args):
         print()
     if args.execute:
         print('<Execute a function from the contract>')
-        contract_manager.exec_participaingInGame(10)  # bet 10 ether
+        contract_manager.exec_participatingInGame(10)  # bet 10 ether
         print()
     print('Goodbye')
 
 
 if __name__ == '__main__':
-    main(sys.args)
+    args = parse_args()
+    main(args)
