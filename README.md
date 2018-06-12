@@ -11,7 +11,7 @@ This is the final project of team04.
 
 Install the requirements.
 
-```Python3
+```bash
 pip3 install -r requirements.txt
 ```
 
