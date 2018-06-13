@@ -1,11 +1,8 @@
 """
     utils/coap.py
-    
+
     by Luke Lee
 """
-
-import sys
-import socket
 
 from coapthon.client.helperclient import HelperClient
 

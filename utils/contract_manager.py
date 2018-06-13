@@ -1,3 +1,9 @@
+"""
+    contract_manager.py
+
+    by Luke Lee
+"""
+
 import time
 import argparse
 import json
@@ -36,7 +42,7 @@ class ContractManager:
         :param contract_path: path in which the contract source code resides
         :return: contract interface
         """
-        
+
         with open(contract_path, 'r') as f:
             contract_code = f.read()
         compiled_sol = solc.compile_source(contract_code)
@@ -63,12 +69,13 @@ class ContractManager:
 
         trans_hash = contract.deploy(
                 transaction={'from': self.w3.eth.accounts[0]})
-
         self._mine_block()  # an Ethereum block needs to be mined to deploy
+
         trans_receipt = self.w3.eth.getTransactionReceipt(trans_hash)
         self.contract_addr = trans_receipt['contractAddress']
         if self.debug:
             print('Deployed the contract to the chain')
+            print('  Hash:', trans_hash)
             print('  Address:', self.contract_addr)
 
     def load_contract(self, contract_addr):
@@ -84,12 +91,13 @@ class ContractManager:
         if self.debug:
             print('Loaded contract from', contract_addr)
 
-    def exec_participatingInGame(self, betting_ether):
+    def exec_participatingInGame(self, sender_idx, choice, betting_ether=10):
         """
         Execute participatingInGame from the deployed contract.
 
+        :param sender_idx: index of the participant
         :param betting_ether: how much to bet in Ether
-        :return: None
+        :return: from the specified function (participatingInGame(choice))
         """
 
         # there should be a contract, either deployed or loaded
@@ -99,13 +107,41 @@ class ContractManager:
                 self.contract_addr, abi=self.contract_interface['abi'])
 
         # execute participatingInGame
-        contract.functions.participatingInGame(1).transact({
-            'from': self.w3.eth.accounts[0],
-            'to': self.contract_addr,
-            'value': self.w3.toWei(betting_ether, 'ether')})
+        func = contract.functions.participatingInGame(choice)
+        trans = {
+                'from': self.w3.eth.accounts[sender_idx],
+                'to': self.contract_addr,
+                'value': self.w3.toWei(betting_ether, 'ether')}
+        func.transact(trans)  # make a transaction
+        self._mine_block()
         if self.debug:
             print('Executed participaingInGame with {} ether'.format(
                     betting_ether))
+        return func.call(trans)  # return the function's return value
+
+    def exec_gameStart(self):
+        """
+        Execute gameStart from the deployed contract.
+
+        :return: from the specified function (gameStart())
+        """
+
+        # there should be a contract, either deployed or loaded
+        if self.contract_addr is None:
+            raise Exception('Contract not loaded!')
+        contract = self.w3.eth.contract(
+                self.contract_addr, abi=self.contract_interface['abi'])
+
+        # execute gameStart
+        func = contract.functions.gameStart()
+        trans = {
+                'from': self.w3.eth.accounts[0],
+                'to': self.contract_addr}
+        func.transact(trans)  # make a transaction
+        self._mine_block()
+        if self.debug:
+            print('Executed gameStart')
+        return func.call(trans)  # return the function's return value
 
     def _mine_block(self, sec=8, n_threads=1):
         """
@@ -133,13 +169,13 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser(
-            description='deploy and execute the smart contract')
+            description='Deploy and execute the smart contract')
     parser.add_argument(
             '--deploy', action='store_true',
             help='Compile and deploy a new contract')
     parser.add_argument(
             '--load', default=None,
-            help='Load an existing contract from given block')
+            help='Address at which the contract is deployed')
     parser.add_argument(
             '--print_abi', default=None,
             help='Print ABI to output file')
@@ -175,7 +211,7 @@ def main(args):
             json.dump(contract_manager.get_abi(), f, indent=2)
     if args.execute:
         print('<Execute a function from the contract>')
-        contract_manager.exec_participatingInGame(10)  # bet 10 ether
+        contract_manager.exec_participatingInGame(0, 1)  # bet 10 ether
         print()
     print('Goodbye')
 

@@ -11,7 +11,7 @@ contract RockScissorPaper {
      * Gather betting money and save player's informations(address, data)
      */
     function participatingInGame(uint32 _data) public payable {
-        require(0 <= _data && _data <= 3);
+        require(0 <= _data && _data <= 2);
         require(amountRaised <= amountRaised + msg.value);
         amountRaised += msg.value;
         MemberAddresses.push(msg.sender);
@@ -19,7 +19,7 @@ contract RockScissorPaper {
     }
 
     /**
-     * Gamer start
+     * Start the game
      */
     function gameStart() public {
         uint32[] memory RSP = new uint32[](3);  // rock, paper, scissors count
