@@ -1,20 +1,21 @@
 """
-    server.py
+    mote_server.py
 
     by Luke Lee
 """
 
 import argparse
 import time
+import socket
 
 from utils import coap
-from utils.contract_manager import ContractManager
 
 
 class MoteServer:
 
-    def __init__(self, contract_manager):
-        self.contract_manager = contract_manager
+    def __init__(bufsize=4096, debug=True):
+        self.bufsize = bufsize
+        self.debug = debug
 
     def load_motelist(self, motelist_path):
         """
@@ -26,7 +27,11 @@ class MoteServer:
         """
 
         with open(motelist_path, 'r') as f:
-            self.motelist = [s.strip() for s in f.readlines()]
+            self.wallets = dict()
+            self.motelist = []
+            for ipaddr, wallet in (s.strip().split() for s in f.readlines()):
+                self.wallets[ipaddr] = wallet
+                self.motelist.append(ipaddr)
 
         # check if the listed motes are alive
         for ipaddr in self.motelist:
@@ -44,6 +49,11 @@ class MoteServer:
         ret = coap.req_coap(ipaddr, 'PUT', 'hello').payload
         print('{}: {}'.format(
                 ipaddr, ret if ret is not None else 'Failed'))
+
+    def create_connection(self, addr, port):
+        self.server_sock = socket.create_connection((addr, port))
+        if self.debug:
+            print('Connected to {}:{}'.format(addr, port))
 
     def start_game(self, n_sim=2):
         """
@@ -63,28 +73,31 @@ class MoteServer:
         if self.debug:
             print('Submitted results')
         for i, ipaddr in enumerate(self.motelist, start=1):
-            ret = int(coap.req_coap(ipaddr, 'PUT', 'end').payload)
-            self.contract_manager.exec_participatingInGame(i, ret)
-            print('- mote #{}: {}'.format(i, ret))
+            choice = 'RGB'.index(coap.req_coap(ipaddr, 'PUT', 'end').payload)
+            self.server_sock.send(bytes(
+                    'participatingInGame {} {}'.format(i, choice), 'utf-8'))
+            ret = self.server_sock.recv(self.bufsize)
+            if self.debug:
+                print('- mote #{}: {}'.format(i, choice))
+                print('  =>', str(ret, 'utf-8'))
         for j in range(n_sim):
             choice = random.randint(0, 2)
-            self.contract_manager.exec_participatingInGame(0, choice)
-            print('- simulator: {}'.format(choice))
+            self.server_sock.send(bytes(
+                    'participatingInGame {} {}'.format(0, choice), 'utf-8'))
+            ret = self.server_sock.recv(self.bufsize)
+            if self.debug:
+                print('- simulator: {}'.format(choice))
+                print('  =>', str(ret, 'utf-8'))
 
         # return the results
-        winners = self.contract_manager.exec_gameStart().split()
-        if self.debug:
-            print('Winners:', *winners)
-        for i, ipaddr in enumerate(self.motelist, start=1):
-            if len(winners) > 0:
-                if ipaddr in winners:  # win
-                    result = 0
-                else:  # lose
-                    result = 1
-            else:  # draw
-                result = 2
+        self.server_sock.send(b'gameStart')
+        ret = self.server_sock.recv(self.bufsize).split()
+        print('=>', str(ret, 'utf-8'))
+        for ipaddr in self.motelist:
+            result = 2
             ret = coap.req_coap(
                     ipaddr, 'PUT', 'result {}'.format(result)).payload
+        self.server_sock.send(b'exit')
 
 
 def parse_args():
@@ -95,22 +108,16 @@ def parse_args():
     """
 
     parser = argparse.ArgumentParser(
-            description='Server-side of the application')
+            description='Mote part of the server')
+    parser.add_argument(
+            '--addr',
+            help='Address of the web3 part')
+    parser.add_argument(
+            '--port', type=int, default=20885,
+            help='Accepting port number of the web3 part')
     parser.add_argument(
             '--motelist', default='motelist.txt',
-            help='The path of the file listing motes\' IPv6 address')
-    parser.add_argument(
-            '--rpc_url', default='http://localhost:8123',
-            help='HTTP URL where the RPC server can be found')
-    parser.add_argument(
-            '--rpc_pw', default='heiler',
-            help='Passphrase for the zeroth account')
-    parser.add_argument(
-            '--contract_code', default='game_contract.sol',
-            help='The path of the contract\'s source code')
-    parser.add_argument(
-            '--contract_addr',
-            help='Address at which the contract is placed')
+            help='File listing motes\' IPv6 address and wallet address')
     parser.add_argument(
             '--n_sim', type=int, default=2,
             help='Number of simulators participating in game')
@@ -119,14 +126,12 @@ def parse_args():
 
 
 def main(args):
-    print('Tetris', end='\n\n')
+    print('Tetris')
+    print('Mote part of the server', end='\n\n')
 
-    contract_manager = ContractManager(
-            args.rpc_url, args.rpc_pw, args.contract_code)
-    contract_manager.load_contract(args.contract_addr)
-
-    mote_server = MoteServer(contract_manager)
+    mote_server = MoteServer()
     mote_server.load_motelist(args.motelist)
+    mote_server.create_connection(args.addr, args.port)
 
     # start the game
     while True:

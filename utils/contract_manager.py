@@ -16,28 +16,36 @@ class ContractManager:
 
     def __init__(self, rpc_url, rpc_acc_pw, contract_path, debug=False):
         self.debug = debug
-        self.w3 = self._init_web3(rpc_url, rpc_acc_pw)
+        self.w3 = self._init_web3(rpc_url)
         self.contract_interface = self._compile_contract(contract_path)
         self.contract_addr = None
 
-    def _init_web3(self, rpc_url, passwd):
+    def _init_web3(self, rpc_url):
         """
         Initialize Web3 and unlock the zeroth account.
 
         :param rpc_url: HTTP URL where the RPC server can be found
-        :param passwd: passphrase for the zeroth account
         :return: Web3 object
         """
 
         w3 = web3.Web3(web3.HTTPProvider(rpc_url))
-        w3.personal.unlockAccount(w3.eth.accounts[0], passwd, 0)
         if self.debug:
             print('Initialized Web3')
         return w3
 
+    def unlock(self, idx, passwd):
+        """
+        Unlock the idx'th account.
+
+        :param idx: account index
+        :param passwd: passphrase for the account
+        :return: None
+        """
+        w3.personal.unlockAccount(w3.eth.accounts[idx], passwd, 0)
+
     def _compile_contract(self, contract_path):
         """
-        Compile the contract source code
+        Compile the contract source code.
 
         :param contract_path: path in which the contract source code resides
         :return: contract interface
@@ -52,11 +60,16 @@ class ContractManager:
         return compiled_sol['<stdin>:RockScissorPaper']
 
     def get_abi(self):
+        """
+        Return the ABI of the compiled contract.
+
+        :return: ABI
+        """
         return self.contract_interface['abi']
 
     def deploy_contract(self):
         """
-        Deploy the compiled contract to the block chain
+        Deploy the compiled contract to the block chain.
         The interface of the contract is stored in self.contract_interface.
 
         :return: None
