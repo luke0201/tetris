@@ -34,11 +34,26 @@ contract RockScissorPaper {
     }
 
     /**
+     *  If player1 who has account with address x is already participating in game,
+     *  it returns true, else returns false
+     */
+    function isAlreadyParticipating(address x) public returns (bool) {
+        uint32 i;
+        for(i=0;i<MemberAddresses.length; i++) {
+            if(MemberAddresses[i]==x){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Gather betting money and save player's informations(address, data)
      */
     function participatingInGame(uint32 _data) public payable {
         require(0 <= _data && _data <= 3);
         require(amountRaised <= amountRaised + msg.value);
+        require(!isAlreadyParticipating(msg.sender));
         amountRaised += msg.value;
         MemberAddresses.push(msg.sender);
         MemberData.push(_data);
