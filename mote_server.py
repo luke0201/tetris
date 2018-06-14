@@ -13,7 +13,7 @@ from utils import coap
 
 class MoteServer:
 
-    def __init__(bufsize=4096, debug=True):
+    def __init__(self, bufsize=4096, debug=True):
         self.bufsize = bufsize
         self.debug = debug
 
@@ -27,11 +27,7 @@ class MoteServer:
         """
 
         with open(motelist_path, 'r') as f:
-            self.wallets = dict()
-            self.motelist = []
-            for ipaddr, wallet in (s.strip().split() for s in f.readlines()):
-                self.wallets[ipaddr] = wallet
-                self.motelist.append(ipaddr)
+            self.motelist = [s.strip() for s in f.readlines()]
 
         # check if the listed motes are alive
         for ipaddr in self.motelist:

@@ -41,7 +41,7 @@ class ContractManager:
         :param passwd: passphrase for the account
         :return: None
         """
-        w3.personal.unlockAccount(w3.eth.accounts[idx], passwd, 0)
+        self.w3.personal.unlockAccount(self.w3.eth.accounts[idx], passwd, 0)
 
     def _compile_contract(self, contract_path):
         """

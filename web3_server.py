@@ -8,14 +8,12 @@ import argparse
 import random
 import socket
 
-
 from utils.contract_manager import ContractManager
 
 
 class Web3Server:
 
     def __init__(self, contract_manager, bufsize=4096, debug=True):
-        self.portno = portno
         self.contract_manager = contract_manager
         self.bufsize = bufsize
         self.debug = debug
@@ -74,7 +72,7 @@ class Web3Server:
 
 
 def parse_args():
-    parser = new ArgumentParser(
+    parser = argparse.ArgumentParser(
             description='Block chain part of the server')
     parser.add_argument(
             '--port', type=int, default=20885,

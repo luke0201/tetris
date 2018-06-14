@@ -1,5 +1,11 @@
-# virtual environment
+# Python-related files
+__pycache__
 .venv
+
+# Project file
+motelist.txt
+logging.conf
+*.json
 
 # OS-specific file
 Thumbs.db
