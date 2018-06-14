@@ -8,9 +8,7 @@ from coapthon.client.helperclient import HelperClient
 
 
 def req_coap(host, op, payload):
-    PORT = 5683  # CoAP uses this port
-
-    port = PORT
+    port = 5683  # CoAP uses this port
     path = 'game'
 
     client = HelperClient(server=(host, port))

@@ -7,6 +7,7 @@
 import argparse
 import time
 import socket
+import random
 
 from utils import coap
 
@@ -87,12 +88,8 @@ class MoteServer:
 
         # return the results
         self.server_sock.send(b'gameStart')
-        ret = self.server_sock.recv(self.bufsize).split()
+        ret = self.server_sock.recv(self.bufsize)
         print('=>', str(ret, 'utf-8'))
-        for ipaddr in self.motelist:
-            result = 2
-            ret = coap.req_coap(
-                    ipaddr, 'PUT', 'result {}'.format(result)).payload
         self.server_sock.send(b'exit')
 
 

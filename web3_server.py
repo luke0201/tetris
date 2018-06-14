@@ -5,7 +5,6 @@
 """
 
 import argparse
-import random
 import socket
 
 from utils.contract_manager import ContractManager
@@ -18,7 +17,7 @@ class Web3Server:
         self.bufsize = bufsize
         self.debug = debug
 
-    def init_server(self, port):
+    def init_server(self, host, port):
         """
         Start running the server
 
@@ -26,7 +25,6 @@ class Web3Server:
         """
         # initialize a socket
         server_sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        host = 'aaaa::2'
         server_sock.bind((host, port))
         server_sock.listen()
         if self.debug:
@@ -75,6 +73,9 @@ def parse_args():
     parser = argparse.ArgumentParser(
             description='Block chain part of the server')
     parser.add_argument(
+            '--addr',
+            help='Address of this host')
+    parser.add_argument(
             '--port', type=int, default=20885,
             help='Listening port number to communicate with the mote part')
     parser.add_argument(
@@ -83,9 +84,6 @@ def parse_args():
     parser.add_argument(
             '--rpc_url', default='http://localhost:8123',
             help='HTTP URL where the RPC server can be found')
-    parser.add_argument(
-            '--rpc_pw', default='heiler',
-            help='Passphrase for the zeroth account')
     parser.add_argument(
             '--contract_code', default='game_contract.sol',
             help='The path of the contract\'s source code')
@@ -103,10 +101,10 @@ def main(args):
     contract_manager = ContractManager(
             args.rpc_url, args.rpc_pw, args.contract_code)
     contract_manager.load_contract(args.contract_addr)
-    contract_manager.unlock(0, 'heiler')
+    # TODO: add accounts
 
     server = Web3Server(contract_manager)
-    server.init_server(args.port)
+    server.init_server(args.addr, args.port)
 
 
 if __name__ == '__main__':
