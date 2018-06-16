@@ -48,6 +48,13 @@ class MoteServer:
                 ipaddr, ret if ret is not None else 'Failed'))
 
     def create_connection(self, addr, port):
+        """
+        Create a connection to the Web3 server
+
+        :param addr: Address of the server
+        :param port: Port number of the server
+        :return: None
+        """
         self.server_sock = socket.create_connection((addr, port))
         if self.debug:
             print('Connected to {}:{}'.format(addr, port))

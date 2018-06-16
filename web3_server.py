@@ -23,6 +23,7 @@ class Web3Server:
 
         :param port: Port number to be listened to
         """
+
         # initialize a socket
         server_sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         server_sock.bind((host, port))
